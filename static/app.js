@@ -757,14 +757,22 @@ async function loadMore() {
 
 async function geocodeLocation(location) {
   const suffix = location.toLowerCase().includes('ireland') ? '' : ', UK';
-  const url = `${GEOCODE_URL}?address=${encodeURIComponent(location + suffix)}&key=${API_KEY}`;
-  const resp = await fetch(url);
-  const data = await resp.json();
-  if (data.results && data.results.length > 0) {
-    const loc = data.results[0].geometry.location;
-    return { lat: loc.lat, lng: loc.lng };
+  try {
+    const resp = await fetch(`${API_BASE}/api/geocode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address: encodeURIComponent(location + suffix) })
+    });
+    const data = await resp.json();
+    if (data.results && data.results.length > 0) {
+      const loc = data.results[0].geometry.location;
+      return { lat: loc.lat, lng: loc.lng };
+    }
+    return null;
+  } catch (err) {
+    console.warn('Geocode failed:', err);
+    return null;
   }
-  return null;
 }
 
 async function runSearchQueries(queries, coords, radius, locationName, vertical) {
